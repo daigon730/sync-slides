@@ -1,0 +1,67 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    "Yu Gothic", Meiryo, sans-serif;
+  background: #10151c;
+  color: #f2f5f0;
+}
+
+/* スライド本体 */
+.stage { min-height: 100dvh; display: flex; }
+.slide {
+  position: relative; flex: 1; display: flex; flex-direction: column;
+  justify-content: center; gap: 1.2rem;
+  padding: clamp(1.2rem, 5vw, 4rem);
+  background:
+    radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--accent) 45%, transparent), transparent),
+    linear-gradient(160deg, #17202a 0%, #10151c 70%);
+}
+.kicker { color: var(--accent); font-weight: 700; letter-spacing: .12em; font-size: clamp(.8rem, 2.4vw, 1rem); filter: brightness(1.6); }
+.slide h1 { font-size: clamp(1.7rem, 6vw, 3.2rem); line-height: 1.25; }
+.slide ul { list-style: none; display: grid; gap: .7rem; max-width: 42rem; }
+.slide li {
+  font-size: clamp(1rem, 3.4vw, 1.35rem); line-height: 1.6;
+  padding-left: 1.1em; position: relative;
+}
+.slide li::before { content: ""; position: absolute; left: 0; top: .62em; width: .45em; height: .45em; border-radius: 50%; background: var(--accent); filter: brightness(1.5); }
+.photo img { max-width: min(560px, 100%); border-radius: 12px; display: block; }
+.counter { position: absolute; top: 1rem; right: 1.2rem; opacity: .75; font-size: .95rem; }
+.progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
+.progress span { display: block; height: 100%; background: var(--accent); filter: brightness(1.4); transition: width .3s; }
+
+/* 参加者側の操作バー */
+.viewer-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; gap: .6rem; align-items: center; justify-content: space-between;
+  padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom));
+  background: rgba(10, 13, 17, .82); backdrop-filter: blur(6px);
+}
+.viewer-bar .status { font-size: .85rem; opacity: .9; }
+button {
+  font: inherit; color: #fff; background: #26313d; border: 1px solid #3c4a58;
+  border-radius: 10px; padding: .55rem 1rem; cursor: pointer;
+}
+button:hover { background: #31404f; }
+button.primary { background: #2f7d4f; border-color: #2f7d4f; }
+button:disabled { opacity: .45; cursor: default; }
+.hidden { display: none !important; }
+
+/* 発表者画面 */
+.presenter { max-width: 880px; margin: 0 auto; padding: 1rem; display: grid; gap: 1rem; }
+.presenter h2 { font-size: 1.1rem; }
+.card { background: #182029; border: 1px solid #2b3745; border-radius: 14px; padding: 1rem; display: grid; gap: .8rem; }
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+input[type="password"], input[type="text"] {
+  font: inherit; color: #fff; background: #0e1319; border: 1px solid #3c4a58;
+  border-radius: 10px; padding: .55rem .8rem; min-width: 220px;
+}
+.preview { border: 1px solid #2b3745; border-radius: 14px; overflow: hidden; }
+.preview .slide { min-height: 300px; }
+.note { font-size: .92rem; line-height: 1.6; opacity: .9; white-space: pre-wrap; }
+#qrcode { background: #fff; padding: 12px; border-radius: 12px; width: fit-content; }
+.small { font-size: .85rem; opacity: .8; word-break: break-all; }
+.jump-list { display: flex; gap: .4rem; flex-wrap: wrap; }
+.jump-list button.active { background: #2f7d4f; border-color: #2f7d4f; }
+.error { color: #ff9c9c; }
+.ok { color: #9fe6b8; }

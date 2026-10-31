@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エアープランツの魅力 — 参加者用</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="stage" id="stage"></main>
+
+<div class="viewer-bar">
+  <span class="status" id="status">接続中…</span>
+  <span>
+    <button id="prevBtn" title="前のスライド">‹</button>
+    <button id="nextBtn" title="次のスライド">›</button>
+    <button id="followBtn" class="primary hidden">発表に戻る</button>
+  </span>
+</div>
+
+<script src="config.js"></script>
+<script src="slides.js"></script>
+<script src="sync.js"></script>
+<script>
+const room = roomFromURL();
+const stage = document.getElementById("stage");
+const statusEl = document.getElementById("status");
+const followBtn = document.getElementById("followBtn");
+
+let serverSlide = 0;
+let viewSlide = 0;
+let following = true;
+
+function render(i) {
+  viewSlide = Math.max(0, Math.min(SLIDES.length - 1, i));
+  stage.innerHTML = slideHTML(viewSlide);
+  document.getElementById("prevBtn").disabled = viewSlide === 0;
+  document.getElementById("nextBtn").disabled = viewSlide === SLIDES.length - 1;
+}
+function setStatus() {
+  statusEl.textContent = following ? "発表に追随中" : "自分で閲覧中";
+  followBtn.classList.toggle("hidden", following);
+}
+
+async function poll() {
+  if (!Sync.configured()) {
+    statusEl.textContent = "同期は設定待ち（config.js）";
+    return;
+  }
+  try {
+    const st = await Sync.getState(room);
+    if (st && st.ok) {
+      serverSlide = st.slide;
+      if (following && serverSlide !== viewSlide) render(serverSlide);
+    }
+  } catch (e) { /* 一時的な失敗は次のポーリングで回復する */ }
+}
+
+document.getElementById("prevBtn").onclick = () => { following = false; render(viewSlide - 1); setStatus(); };
+document.getElementById("nextBtn").onclick = () => { following = false; render(viewSlide + 1); setStatus(); };
+followBtn.onclick = () => { following = true; render(serverSlide); setStatus(); };
+
+render(0);
+setStatus();
+poll();
+setInterval(poll, 1200);
+</script>
+</body>
+</html>
