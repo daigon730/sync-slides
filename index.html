@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>エアープランツの魅力 — 参加者用</title>
+<meta property="og:title" content="エアープランツの魅力 — 同期スライド">
+<meta property="og:description" content="発表者に追随する同期スライド。土がいらない植物、チランジアの魅力を紹介します。">
+<meta property="og:image" content="https://daigon730.github.io/sync-slides/images/hero.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 </head>
 <body>
 <main class="stage" id="stage"></main>
@@ -12,6 +17,8 @@
 <div class="viewer-bar">
   <span class="status" id="status">接続中…</span>
   <span>
+    <button id="saveBtn">画像を保存</button>
+    <button id="xBtn">Xに投稿</button>
     <button id="prevBtn" title="前のスライド">‹</button>
     <button id="nextBtn" title="次のスライド">›</button>
     <button id="followBtn" class="primary hidden">発表に戻る</button>
@@ -55,6 +62,45 @@ async function poll() {
     }
   } catch (e) { /* 一時的な失敗は次のポーリングで回復する */ }
 }
+
+function flashStatus(text) {
+  statusEl.textContent = text;
+  setTimeout(setStatus, 2600);
+}
+
+// 表示中のスライドをPNG画像として保存する
+document.getElementById("saveBtn").onclick = async () => {
+  const node = stage.querySelector(".slide");
+  if (!node || !window.htmlToImage) { flashStatus("画像を作成できませんでした"); return; }
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  try {
+    await htmlToImage.toPng(node, { pixelRatio: 2 }); // Safari対策のウォームアップ
+    const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 2 });
+    const a = document.createElement("a");
+    a.download = `slide-${viewSlide + 1}.png`;
+    a.href = dataUrl;
+    a.click();
+    flashStatus("画像を保存しました");
+  } catch (e) {
+    flashStatus("画像の保存に失敗しました");
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// Xの投稿画面を開く（本文とURLを入力済みにする。実際の投稿はX側で本人が行う）
+document.getElementById("xBtn").onclick = () => {
+  const s = SLIDES[viewSlide];
+  const text = `「エアープランツの魅力」${viewSlide + 1}/${SLIDES.length}：${s.title}`;
+  const url = location.origin + location.pathname +
+    (room !== "main" ? `?room=${encodeURIComponent(room)}` : "");
+  const intent = "https://twitter.com/intent/tweet" +
+    `?text=${encodeURIComponent(text)}` +
+    `&url=${encodeURIComponent(url)}` +
+    `&hashtags=${encodeURIComponent("エアープランツ,チランジア")}`;
+  window.open(intent, "_blank", "noopener");
+};
 
 document.getElementById("prevBtn").onclick = () => { following = false; render(viewSlide - 1); setStatus(); };
 document.getElementById("nextBtn").onclick = () => { following = false; render(viewSlide + 1); setStatus(); };

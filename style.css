@@ -37,7 +37,8 @@ body {
 /* 参加者側の操作バー */
 .viewer-bar {
   position: fixed; left: 0; right: 0; bottom: 0;
-  display: flex; gap: .6rem; align-items: center; justify-content: space-between;
+  display: flex; flex-wrap: wrap; row-gap: .4rem;
+  gap: .6rem; align-items: center; justify-content: space-between;
   padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom));
   background: rgba(10, 13, 17, .82); backdrop-filter: blur(6px);
 }
