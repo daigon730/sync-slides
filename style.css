@@ -31,6 +31,14 @@ body {
 .slide li::before { content: ""; position: absolute; left: 0; top: .62em; width: .45em; height: .45em; border-radius: 50%; background: var(--accent); filter: brightness(1.5); }
 .photo img { max-width: 58cqw; max-height: 34cqh; object-fit: contain; border-radius: 12px; display: block; }
 .counter { position: absolute; top: 2.2cqw; right: 2.6cqw; opacity: .75; font-size: 1.9cqw; }
+
+/* 画像書き出し専用のホスト（画面外に1920×1080固定で描く） */
+.export-host {
+  position: fixed; left: -10000px; top: 0;
+  width: 1920px; height: 1080px;
+  pointer-events: none;
+}
+.export-host .slide { width: 1920px; height: 1080px; }
 .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
 .progress span { display: block; height: 100%; background: var(--accent); filter: brightness(1.4); transition: width .3s; }
 

@@ -68,15 +68,42 @@ function flashStatus(text) {
   setTimeout(setStatus, 2600);
 }
 
-// 表示中のスライドをPNG画像として保存する
+// 表示中のスライドをPNG画像として保存する。
+// 画面上のスライドはビューポート依存のサイズで描かれているため、そのまま画像化すると
+// 画面全体（上下の余白込み）で書き出されることがある。そこで書き出し専用に
+// 1920×1080（16:9）固定の複製を作り、スライド部分だけをPNGにする。
+const EXPORT_W = 1920;
+const EXPORT_H = 1080;
+
+async function renderSlidePng() {
+  const host = document.createElement("div");
+  host.className = "export-host";
+  host.innerHTML = slideHTML(viewSlide);
+  document.body.appendChild(host);
+  const node = host.querySelector(".slide");
+  try {
+    const img = node.querySelector("img");
+    if (img && !img.complete) {
+      try { await img.decode(); } catch (e) { /* 読み込み済みならそのまま進む */ }
+    }
+    const opts = {
+      width: EXPORT_W, height: EXPORT_H,
+      canvasWidth: EXPORT_W, canvasHeight: EXPORT_H,
+      pixelRatio: 1
+    };
+    await htmlToImage.toPng(node, opts); // Safari対策のウォームアップ
+    return await htmlToImage.toPng(node, opts);
+  } finally {
+    host.remove();
+  }
+}
+
 document.getElementById("saveBtn").onclick = async () => {
-  const node = stage.querySelector(".slide");
-  if (!node || !window.htmlToImage) { flashStatus("画像を作成できませんでした"); return; }
+  if (!window.htmlToImage) { flashStatus("画像を作成できませんでした"); return; }
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
   try {
-    await htmlToImage.toPng(node, { pixelRatio: 2 }); // Safari対策のウォームアップ
-    const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 2 });
+    const dataUrl = await renderSlidePng();
     const a = document.createElement("a");
     a.download = `slide-${viewSlide + 1}.png`;
     a.href = dataUrl;
