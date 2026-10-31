@@ -75,27 +75,52 @@ function flashStatus(text) {
 const EXPORT_W = 1920;
 const EXPORT_H = 1080;
 
-async function renderSlidePng() {
+function waitImage(img, timeoutMs) {
+  if (!img) return Promise.resolve();
+  if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => resolve();
+    img.addEventListener("load", done, { once: true });
+    img.addEventListener("error", done, { once: true });
+    setTimeout(done, timeoutMs);
+  });
+}
+
+async function slideToBlob(node, opts) {
+  await htmlToImage.toBlob(node, opts); // Safari対策のウォームアップ（初回が空になることがある）
+  const blob = await htmlToImage.toBlob(node, opts);
+  if (!blob) throw new Error("empty image");
+  return blob;
+}
+
+// 書き出し専用の複製（1920×1080固定）からPNGを作る
+async function renderExportBlob() {
   const host = document.createElement("div");
   host.className = "export-host";
   host.innerHTML = slideHTML(viewSlide);
   document.body.appendChild(host);
-  const node = host.querySelector(".slide");
   try {
-    const img = node.querySelector("img");
-    if (img && !img.complete) {
-      try { await img.decode(); } catch (e) { /* 読み込み済みならそのまま進む */ }
-    }
-    const opts = {
+    const node = host.querySelector(".slide");
+    await waitImage(node.querySelector("img"), 4000);
+    return await slideToBlob(node, {
       width: EXPORT_W, height: EXPORT_H,
       canvasWidth: EXPORT_W, canvasHeight: EXPORT_H,
       pixelRatio: 1
-    };
-    await htmlToImage.toPng(node, opts); // Safari対策のウォームアップ
-    return await htmlToImage.toPng(node, opts);
+    });
   } finally {
     host.remove();
   }
+}
+
+// 予備: 画面に表示中のスライドからPNGを作る
+async function renderVisibleBlob() {
+  const node = stage.querySelector(".slide");
+  if (!node) throw new Error("no slide");
+  const rect = node.getBoundingClientRect();
+  return slideToBlob(node, {
+    width: Math.round(rect.width), height: Math.round(rect.height),
+    pixelRatio: 2
+  });
 }
 
 document.getElementById("saveBtn").onclick = async () => {
@@ -103,11 +128,19 @@ document.getElementById("saveBtn").onclick = async () => {
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
   try {
-    const dataUrl = await renderSlidePng();
+    let blob;
+    try {
+      blob = await renderExportBlob();
+    } catch (e1) {
+      blob = await renderVisibleBlob();
+    }
+    // 大きなdata URLはiOS Safariで失敗しやすいので、Blob URLでダウンロードさせる
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.download = `slide-${viewSlide + 1}.png`;
-    a.href = dataUrl;
+    a.href = url;
     a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
     flashStatus("画像を保存しました");
   } catch (e) {
     flashStatus("画像の保存に失敗しました");

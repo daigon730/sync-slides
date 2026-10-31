@@ -32,11 +32,11 @@ body {
 .photo img { max-width: 58cqw; max-height: 34cqh; object-fit: contain; border-radius: 12px; display: block; }
 .counter { position: absolute; top: 2.2cqw; right: 2.6cqw; opacity: .75; font-size: 1.9cqw; }
 
-/* 画像書き出し専用のホスト（画面外に1920×1080固定で描く） */
+/* 画像書き出し専用のホスト（1920×1080固定。画面には出さないが描画はさせる） */
 .export-host {
-  position: fixed; left: -10000px; top: 0;
+  position: fixed; left: 0; top: 0; z-index: -1;
   width: 1920px; height: 1080px;
-  pointer-events: none;
+  opacity: 0; pointer-events: none;
 }
 .export-host .slide { width: 1920px; height: 1080px; }
 .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
