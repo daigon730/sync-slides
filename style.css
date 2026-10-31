@@ -7,26 +7,30 @@ body {
   color: #f2f5f0;
 }
 
-/* スライド本体 */
-.stage { min-height: 100dvh; display: flex; }
+/* スライド本体（16:9固定。画面に収まる最大サイズで中央に表示する） */
+.stage { min-height: 100dvh; display: grid; place-items: center; }
 .slide {
-  position: relative; flex: 1; display: flex; flex-direction: column;
-  justify-content: center; gap: 1.2rem;
-  padding: clamp(1.2rem, 5vw, 4rem);
+  container-type: size;
+  position: relative; display: flex; flex-direction: column;
+  justify-content: center; gap: 3.5%;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  height: min(100dvh, calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  padding: 4.5%;
   background:
     radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--accent) 45%, transparent), transparent),
     linear-gradient(160deg, #17202a 0%, #10151c 70%);
 }
-.kicker { color: var(--accent); font-weight: 700; letter-spacing: .12em; font-size: clamp(.8rem, 2.4vw, 1rem); filter: brightness(1.6); }
-.slide h1 { font-size: clamp(1.7rem, 6vw, 3.2rem); line-height: 1.25; }
-.slide ul { list-style: none; display: grid; gap: .7rem; max-width: 42rem; }
+.kicker { color: var(--accent); font-weight: 700; letter-spacing: .12em; font-size: 2cqw; filter: brightness(1.6); }
+.slide h1 { font-size: 5.2cqw; line-height: 1.25; }
+.slide ul { list-style: none; display: grid; gap: 1.8cqw; max-width: 94cqw; }
 .slide li {
-  font-size: clamp(1rem, 3.4vw, 1.35rem); line-height: 1.6;
+  font-size: 2.65cqw; line-height: 1.6;
   padding-left: 1.1em; position: relative;
 }
 .slide li::before { content: ""; position: absolute; left: 0; top: .62em; width: .45em; height: .45em; border-radius: 50%; background: var(--accent); filter: brightness(1.5); }
-.photo img { max-width: min(560px, 100%); border-radius: 12px; display: block; }
-.counter { position: absolute; top: 1rem; right: 1.2rem; opacity: .75; font-size: .95rem; }
+.photo img { max-width: 58cqw; max-height: 34cqh; object-fit: contain; border-radius: 12px; display: block; }
+.counter { position: absolute; top: 2.2cqw; right: 2.6cqw; opacity: .75; font-size: 1.9cqw; }
 .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
 .progress span { display: block; height: 100%; background: var(--accent); filter: brightness(1.4); transition: width .3s; }
 
@@ -57,7 +61,7 @@ input[type="password"], input[type="text"] {
   border-radius: 10px; padding: .55rem .8rem; min-width: 220px;
 }
 .preview { border: 1px solid #2b3745; border-radius: 14px; overflow: hidden; }
-.preview .slide { min-height: 300px; }
+.preview .slide { width: 100%; height: auto; }
 .note { font-size: .92rem; line-height: 1.6; opacity: .9; white-space: pre-wrap; }
 #qrcode { background: #fff; padding: 12px; border-radius: 12px; width: fit-content; }
 .small { font-size: .85rem; opacity: .8; word-break: break-all; }
