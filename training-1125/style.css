@@ -1,0 +1,85 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    "Yu Gothic", Meiryo, sans-serif;
+  background: #10151c;
+  color: #f2f5f0;
+}
+
+/* スライド本体（16:9固定。画面に収まる最大サイズで中央に表示する） */
+.stage { min-height: 100dvh; display: grid; place-items: center; }
+.slide {
+  container-type: size;
+  position: relative; display: flex; flex-direction: column;
+  justify-content: center; gap: 3.5%;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  height: min(100dvh, calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  padding: 4.5%;
+  background:
+    radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--accent) 45%, transparent), transparent),
+    linear-gradient(160deg, #17202a 0%, #10151c 70%);
+}
+.kicker { color: var(--accent); font-weight: 700; letter-spacing: .12em; font-size: 2cqw; filter: brightness(1.6); }
+.slide h1 { font-size: 5.2cqw; line-height: 1.25; }
+.slide ul { list-style: none; display: grid; gap: 1.8cqw; max-width: 94cqw; }
+.slide li {
+  font-size: 2.65cqw; line-height: 1.6;
+  padding-left: 1.1em; position: relative;
+}
+.slide li::before { content: ""; position: absolute; left: 0; top: .62em; width: .45em; height: .45em; border-radius: 50%; background: var(--accent); filter: brightness(1.5); }
+.photo img { max-width: 58cqw; max-height: 34cqh; object-fit: contain; border-radius: 12px; display: block; }
+.counter { position: absolute; top: 2.2cqw; right: 2.6cqw; opacity: .75; font-size: 1.9cqw; }
+
+/* 画像書き出し専用のホスト（1920×1080固定。画面には出さないが描画はさせる） */
+.export-host {
+  position: fixed; left: 0; top: 0; z-index: -1;
+  width: 1920px; height: 1080px;
+  opacity: 0; pointer-events: none;
+}
+.export-host .slide { width: 1920px; height: 1080px; }
+.progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); }
+.progress span { display: block; height: 100%; background: var(--accent); filter: brightness(1.4); transition: width .3s; }
+
+/* 参加者側の操作バー */
+.viewer-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; flex-wrap: wrap; row-gap: .4rem;
+  gap: .6rem; align-items: center; justify-content: space-between;
+  padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom));
+  background: rgba(10, 13, 17, .82); backdrop-filter: blur(6px);
+}
+.viewer-bar .status { font-size: .85rem; opacity: .9; }
+button {
+  font: inherit; color: #fff; background: #26313d; border: 1px solid #3c4a58;
+  border-radius: 10px; padding: .55rem 1rem; cursor: pointer;
+}
+button:hover { background: #31404f; }
+button.primary { background: #2f7d4f; border-color: #2f7d4f; }
+button:disabled { opacity: .45; cursor: default; }
+.hidden { display: none !important; }
+
+/* 発表者画面 */
+.presenter { max-width: 880px; margin: 0 auto; padding: 1rem; display: grid; gap: 1rem; }
+.presenter h2 { font-size: 1.1rem; }
+.card { background: #182029; border: 1px solid #2b3745; border-radius: 14px; padding: 1rem; display: grid; gap: .8rem; }
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+input[type="password"], input[type="text"] {
+  font: inherit; color: #fff; background: #0e1319; border: 1px solid #3c4a58;
+  border-radius: 10px; padding: .55rem .8rem; min-width: 220px;
+}
+.preview { border: 1px solid #2b3745; border-radius: 14px; overflow: hidden; }
+.preview .slide { width: 100%; height: auto; }
+.note { font-size: .92rem; line-height: 1.6; opacity: .9; white-space: pre-wrap; }
+#qrcode { background: #fff; padding: 12px; border-radius: 12px; width: fit-content; }
+.small { font-size: .85rem; opacity: .8; word-break: break-all; }
+.jump-list { display: flex; gap: .4rem; flex-wrap: wrap; }
+.jump-list button.active { background: #2f7d4f; border-color: #2f7d4f; }
+.error { color: #ff9c9c; }
+.ok { color: #9fe6b8; }
+
+/* 全面画像スライド（imageFull指定時） */
+.slide.full { padding: 0; background: #000; }
+.slide.full img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.slide.full .counter { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>発表者コントロール — 同期スライド</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<main class="presenter">
+  <h2>発表者コントロール</h2>
+
+  <div class="card">
+    <div class="row">
+      <label>合言葉 <input type="password" id="keyInput" placeholder="Apps Scriptに設定した PRESENTER_KEY"></label>
+      <span class="small">この画面は参加者に見せないでください。</span>
+    </div>
+    <div class="row">
+      <button id="prevBtn">← 戻る</button>
+      <button id="nextBtn" class="primary">進む →</button>
+      <span id="pos"></span>
+      <span id="msg" class="small"></span>
+    </div>
+    <div class="jump-list" id="jumpList"></div>
+  </div>
+
+  <div class="preview" id="preview"></div>
+  <div class="card">
+    <h2>発表者メモ</h2>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div class="card">
+    <h2>参加者用QRコード</h2>
+    <div id="qrcode"></div>
+    <div class="small" id="audienceUrl"></div>
+    <div class="small">参加者はこのQRコードを読み取ると、追随表示のスライドが開きます。</div>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script src="slides.js"></script>
+<script src="sync.js"></script>
+<script>
+const room = roomFromURL();
+let current = 0;
+const keyInput = document.getElementById("keyInput");
+keyInput.value = sessionStorage.getItem("presenterKey") || "";
+keyInput.onchange = () => sessionStorage.setItem("presenterKey", keyInput.value);
+
+const msg = document.getElementById("msg");
+function showMsg(text, ok) {
+  msg.textContent = text;
+  msg.className = "small " + (ok ? "ok" : "error");
+}
+
+function render() {
+  document.getElementById("preview").innerHTML = slideHTML(current);
+  document.getElementById("note").textContent = SLIDES[current].note || "";
+  document.getElementById("pos").textContent = `${current + 1} / ${SLIDES.length} 枚目`;
+  document.querySelectorAll(".jump-list button").forEach((b, i) =>
+    b.classList.toggle("active", i === current));
+  document.getElementById("prevBtn").disabled = current === 0;
+  document.getElementById("nextBtn").disabled = current === SLIDES.length - 1;
+}
+
+async function go(i) {
+  current = Math.max(0, Math.min(SLIDES.length - 1, i));
+  render();
+  if (!Sync.configured()) {
+    showMsg("同期は設定待ちです（config.js にURLを貼ると有効になります）", false);
+    return;
+  }
+  const key = keyInput.value.trim();
+  if (!key) { showMsg("合言葉を入力してください", false); return; }
+  try {
+    const r = await Sync.setSlide(room, current, key);
+    if (r && r.ok) showMsg("参加者へ送信済み", true);
+    else showMsg("送信できませんでした: " + (r && r.error ? r.error : "不明なエラー"), false);
+  } catch (e) {
+    showMsg("通信に失敗しました", false);
+  }
+}
+
+document.getElementById("prevBtn").onclick = () => go(current - 1);
+document.getElementById("nextBtn").onclick = () => go(current + 1);
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(current + 1); }
+  if (e.key === "ArrowLeft") go(current - 1);
+});
+
+const jumpList = document.getElementById("jumpList");
+SLIDES.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.textContent = `${i + 1}. ${s.title}`;
+  b.onclick = () => go(i);
+  jumpList.appendChild(b);
+});
+
+// 参加者URLとQRコード
+const audienceUrl = location.href.replace(/presenter\.html.*$/, "index.html") +
+  (room !== "main" ? `?room=${encodeURIComponent(room)}` : "");
+document.getElementById("audienceUrl").textContent = audienceUrl;
+try {
+  new QRCode(document.getElementById("qrcode"), { text: audienceUrl, width: 180, height: 180 });
+} catch (e) {
+  document.getElementById("qrcode").textContent = "QRコードを生成できませんでした。上のURLを共有してください。";
+}
+
+// 起動時にサーバーの現在位置へ合わせる
+(async () => {
+  if (Sync.configured()) {
+    try {
+      const st = await Sync.getState(room);
+      if (st && st.ok) { current = Math.max(0, Math.min(SLIDES.length - 1, st.slide)); }
+    } catch (e) {}
+  }
+  render();
+})();
+</script>
+</body>
+</html>
