@@ -22,14 +22,30 @@
       <span id="pos"></span>
       <span id="msg" class="small"></span>
     </div>
-    <div class="jump-list" id="jumpList"></div>
+    <div class="chips" id="chips"></div>
+    <div class="cur-title" id="curTitle"></div>
+    <details class="jump-titles">
+      <summary>タイトルで選ぶ</summary>
+      <div class="jump-list" id="jumpList"></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="row sw">
+      <span class="sw-time" id="swTime">00:00</span>
+      <button id="swToggle">スタート</button>
+      <button id="swReset">リセット</button>
+      <span class="small">研修全体の経過時間</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>発表者メモ <span class="guide" id="guide"></span></h2>
+    <div class="note" id="note"></div>
+    <div class="next-line" id="nextLine"></div>
   </div>
 
   <div class="preview" id="preview"></div>
-  <div class="card">
-    <h2>発表者メモ</h2>
-    <div class="note" id="note"></div>
-  </div>
 
   <div class="card">
     <h2>参加者用QRコード</h2>
@@ -59,6 +75,16 @@ function render() {
   document.getElementById("preview").innerHTML = slideHTML(current);
   document.getElementById("note").textContent = SLIDES[current].note || "";
   document.getElementById("pos").textContent = `${current + 1} / ${SLIDES.length} 枚目`;
+  document.getElementById("curTitle").textContent =
+    `${current + 1}. ${SLIDES[current].title}`;
+  const m = (SLIDES[current].note || "").match(/\d+〜\d+分/);
+  document.getElementById("guide").textContent = m ? `（目安 ${m[0]}）` : "";
+  document.getElementById("nextLine").textContent =
+    current + 1 < SLIDES.length
+      ? `次：${current + 2}. ${SLIDES[current + 1].title}`
+      : "次：最終スライドです";
+  document.querySelectorAll("#chips button").forEach((b, i) =>
+    b.classList.toggle("active", i === current));
   document.querySelectorAll(".jump-list button").forEach((b, i) =>
     b.classList.toggle("active", i === current));
   document.getElementById("prevBtn").disabled = current === 0;
@@ -86,18 +112,60 @@ async function go(i) {
 document.getElementById("prevBtn").onclick = () => go(current - 1);
 document.getElementById("nextBtn").onclick = () => go(current + 1);
 document.addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT") return;
+  if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
   if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(current + 1); }
   if (e.key === "ArrowLeft") go(current - 1);
 });
 
+// 番号チップとタイトル一覧
+const chips = document.getElementById("chips");
 const jumpList = document.getElementById("jumpList");
 SLIDES.forEach((s, i) => {
+  const c = document.createElement("button");
+  c.textContent = `${i + 1}`;
+  c.title = s.title;
+  c.onclick = () => go(i);
+  chips.appendChild(c);
   const b = document.createElement("button");
   b.textContent = `${i + 1}. ${s.title}`;
   b.onclick = () => go(i);
   jumpList.appendChild(b);
 });
+
+// ストップウォッチ
+let swStart = null, swElapsed = 0, swTimer = null;
+const swTime = document.getElementById("swTime");
+const swToggle = document.getElementById("swToggle");
+function swFormat(ms) {
+  const sec = Math.floor(ms / 1000);
+  const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+  const ss = String(sec % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+function swRender() {
+  const now = swStart === null ? swElapsed : swElapsed + (Date.now() - swStart);
+  swTime.textContent = swFormat(now);
+}
+swToggle.onclick = () => {
+  if (swStart === null) {
+    swStart = Date.now();
+    swTimer = setInterval(swRender, 250);
+    swToggle.textContent = "一時停止";
+  } else {
+    swElapsed += Date.now() - swStart;
+    swStart = null;
+    clearInterval(swTimer);
+    swRender();
+    swToggle.textContent = "再開";
+  }
+};
+document.getElementById("swReset").onclick = () => {
+  swStart = null; swElapsed = 0;
+  clearInterval(swTimer);
+  swRender();
+  swToggle.textContent = "スタート";
+};
+swRender();
 
 // 参加者URLとQRコード
 const audienceUrl = location.href.replace(/presenter\.html.*$/, "index.html") +

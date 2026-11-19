@@ -83,3 +83,16 @@ input[type="password"], input[type="text"] {
 .slide.full { padding: 0; background: #000; }
 .slide.full img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .slide.full .counter { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+
+/* 発表者画面の改良（番号チップ／ストップウォッチ／メモ） */
+.chips { display: flex; gap: .35rem; flex-wrap: wrap; }
+.chips button { min-width: 2.5rem; padding: .45rem 0; text-align: center; }
+.chips button.active { background: #2f7d4f; border-color: #2f7d4f; color: #fff; }
+.cur-title { font-weight: 700; font-size: 1.02rem; }
+.jump-titles summary { cursor: pointer; font-size: .9rem; opacity: .85; }
+.jump-titles .jump-list { margin-top: .5rem; }
+.sw { gap: .8rem; }
+.sw-time { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .04em; min-width: 6.5rem; }
+.note { font-size: 1rem; }
+.guide { color: #9fe6b8; font-size: .9rem; font-weight: 400; }
+.next-line { font-size: .9rem; opacity: .85; border-top: 1px solid #2b3745; padding-top: .6rem; }
