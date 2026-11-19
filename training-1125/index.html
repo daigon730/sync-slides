@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>エアープランツの魅力 — 参加者用</title>
-<meta property="og:title" content="エアープランツの魅力 — 同期スライド">
-<meta property="og:description" content="発表者に追随する同期スライド。土がいらない植物、チランジアの魅力を紹介します。">
-<meta property="og:image" content="https://daigon730.github.io/sync-slides/images/hero.jpg">
+<title>新しいGemini、どこまで頼める？ — 参加者用</title>
+<meta property="og:title" content="新しいGemini、どこまで頼める？ — 同期スライド">
+<meta property="og:description" content="発表者に追随する同期スライド。11月25日 選択研修③「コードは書かない、言葉で作る50分」の資料です。">
+<meta property="og:image" content="https://daigon730.github.io/sync-slides/training-1125/images/slide-01.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
@@ -152,13 +152,13 @@ document.getElementById("saveBtn").onclick = async () => {
 // Xの投稿画面を開く（本文とURLを入力済みにする。実際の投稿はX側で本人が行う）
 document.getElementById("xBtn").onclick = () => {
   const s = SLIDES[viewSlide];
-  const text = `「エアープランツの魅力」${viewSlide + 1}/${SLIDES.length}：${s.title}`;
+  const text = `「新しいGemini、どこまで頼める？」${viewSlide + 1}/${SLIDES.length}：${s.title}`;
   const url = location.origin + location.pathname +
     (room !== "main" ? `?room=${encodeURIComponent(room)}` : "");
   const intent = "https://twitter.com/intent/tweet" +
     `?text=${encodeURIComponent(text)}` +
     `&url=${encodeURIComponent(url)}` +
-    `&hashtags=${encodeURIComponent("エアープランツ,チランジア")}`;
+    `&hashtags=${encodeURIComponent("Gemini,教員研修")}`;
   window.open(intent, "_blank", "noopener");
 };
 
