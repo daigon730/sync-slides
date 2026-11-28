@@ -1,34 +1,27 @@
-// 同期クライアント：Apps Script の Webアプリと JSONP で通信する。
-// （クロスドメインでも読み書きできるようにするための方式）
-function jsonp(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = "__sync_cb_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
-    const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 30000);
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      script.remove();
-    }
-    window[cbName] = (data) => { cleanup(); resolve(data); };
-    script.onerror = () => { cleanup(); reject(new Error("network")); };
-    script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cbName;
-    document.head.appendChild(script);
-  });
-}
-
-function roomFromURL() {
-  return new URLSearchParams(location.search).get("room") || "main";
-}
-
+// GitHub Pages and Apps Script are different origins. This public web app
+// authenticates writes with the presenter key and needs no Google cookies.
 const Sync = {
-  configured() { return typeof SYNC_ENDPOINT === "string" && SYNC_ENDPOINT.startsWith("http"); },
-  async getState(room) {
-    const u = `${SYNC_ENDPOINT}?action=get&room=${encodeURIComponent(room)}`;
-    return jsonp(u);
+  async request(params) {
+    const endpoint = new URL(SYNC_ENDPOINT);
+    endpoint.search = new URLSearchParams(params);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(endpoint, {
+        credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer',
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      if (!(response.headers.get('content-type') || '').includes('application/json'))
+        throw new Error('JSON以外の応答');
+      return await response.json();
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error('timeout');
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
   },
-  async setSlide(room, slide, key) {
-    const u = `${SYNC_ENDPOINT}?action=set&room=${encodeURIComponent(room)}&slide=${slide}&key=${encodeURIComponent(key)}`;
-    return jsonp(u);
-  }
+  getState(room) { return this.request({action:'get',room}); },
+  setSlide(room,slide,key) { return this.request({action:'set',room,slide,key}); }
 };
