@@ -1,6 +1,64 @@
-<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XR Kaigi 2026｜参加者用</title><style>body{margin:0;background:#102b33;color:white;font:14px sans-serif}iframe{width:100%;height:calc(100dvh - 28px);border:0;display:block}footer{text-align:center;line-height:28px}</style><iframe title="登壇スライド" src="deck.html"></iframe><footer role="status">発表中のページを確認しています</footer><script src="../config.js"></script><script src="../sync.js"></script><script>
-const frame=document.querySelector('iframe'),statusText=document.querySelector('footer');
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XR Kaigi 2026｜参加者用</title><style>body{margin:0;background:#102b33;color:white;font:14px sans-serif}iframe{width:100%;height:calc(100dvh - 28px);border:0;display:block}footer{text-align:center;line-height:28px}body{height:100dvh;display:flex;flex-direction:column;margin:0}iframe{flex:1;min-height:0;height:auto}footer{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap;padding:6px 10px}button{border:1px solid #7d9b9b;border-radius:6px;background:#173c44;color:white;padding:7px 12px;font:inherit;cursor:pointer}#feedback:empty{display:none}</style><iframe title="登壇スライド" src="deck.html"></iframe><footer><span id="sync" role="status">発表中のページを確認しています</span><button id="post">Xに投稿</button><button id="save">このスライドを画像保存</button><span id="feedback" role="status"></span></footer><script src="../config.js"></script><script src="sync-client.js"></script><script>
+const frame=document.querySelector('iframe'),statusText=document.querySelector('#sync');
 const room='xr-kaigi-2026';let pending=false;
 async function refresh(){if(pending||document.hidden)return;pending=true;try{const state=await Sync.getState(room);if(!state.ok||!Number.isInteger(state.slide)||state.slide<0||state.slide>=25)throw Error();frame.contentWindow.show(state.slide);statusText.textContent='発表に追随中　'+(state.slide+1)+' / 25'}catch{statusText.textContent='接続を確認中 · 自動で再接続します'}finally{pending=false}}
 frame.onload=refresh;document.addEventListener('visibilitychange',refresh);window.addEventListener('online',refresh);setInterval(refresh,5000);refresh()
+const saveButton = document.querySelector('#save');
+const postButton = document.querySelector('#post');
+const feedback = document.querySelector('#feedback');
+
+function visibleSlide() {
+  const doc = frame.contentDocument;
+  const section = doc.querySelector('section.on');
+  if (!section) throw new Error('スライドの読み込み中です。');
+  const pages = Array.from(doc.querySelectorAll('section'));
+  return { doc, svg: section.querySelector('svg'), page: pages.indexOf(section) + 1 };
+}
+
+postButton.onclick = () => {
+  try {
+    const { page } = visibleSlide();
+    const link = new URL('deck.html', location.href);
+    link.hash = page;
+    const intent = new URL('https://twitter.com/intent/tweet');
+    intent.search = new URLSearchParams({
+      text: '「生徒と先生はAIをどう使うか」中村太悟・鳳凰高等学校（' + page + '枚目）',
+      url: link.href, hashtags: 'XRKaigi'
+    });
+    window.open(intent.href, '_blank', 'noopener,noreferrer');
+  } catch (error) { feedback.textContent = error.message; }
+};
+
+saveButton.onclick = async () => {
+  saveButton.disabled = true;
+  try {
+    const { doc, svg, page } = visibleSlide();
+    const copy = svg.cloneNode(true);
+    copy.setAttribute('width', 1600);
+    copy.setAttribute('height', 900);
+    copy.setAttribute('font-family', getComputedStyle(doc.body).fontFamily);
+    const defs = doc.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    for (const use of copy.querySelectorAll('use')) {
+      const id = use.getAttribute('href').slice(1);
+      if (!defs.querySelector('#' + CSS.escape(id))) defs.append(doc.getElementById(id).cloneNode(true));
+    }
+    copy.prepend(defs);
+    const image = new Image();
+    const xml = new XMLSerializer().serializeToString(copy);
+    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600; canvas.height = 900;
+    canvas.getContext('2d').drawImage(image, 0, 0);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('PNGを作成できませんでした。');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'XR-Kaigi-2026-' + String(page).padStart(2, '0') + '.png';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    feedback.textContent = page + '枚目のPNGを用意しました';
+  } catch (error) { feedback.textContent = '保存できませんでした。もう一度お試しください。'; }
+  finally { saveButton.disabled = false; }
+};
 </script></html>
