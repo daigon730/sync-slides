@@ -1,8 +1,80 @@
-<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XR Kaigi 2026｜参加者用</title><style>body{margin:0;background:#102b33;color:white;font:14px sans-serif}iframe{width:100%;height:calc(100dvh - 28px);border:0;display:block}footer{text-align:center;line-height:28px}body{height:100dvh;display:flex;flex-direction:column;margin:0}iframe{flex:1;min-height:0;height:auto}footer{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap;padding:6px 10px}button{border:1px solid #7d9b9b;border-radius:6px;background:#173c44;color:white;padding:7px 12px;font:inherit;cursor:pointer}#feedback:empty{display:none}</style><iframe title="登壇スライド" src="deck.html"></iframe><footer><span id="sync" role="status">発表中のページを確認しています</span><button id="post">Xに投稿</button><button id="save">このスライドを画像保存</button><span id="feedback" role="status"></span></footer><script src="../config.js"></script><script src="sync-client.js?v=3"></script><script>
-const frame=document.querySelector('iframe'),statusText=document.querySelector('#sync');
-const room='xr-kaigi-2026';let pending=false;
-async function refresh(){if(pending||document.hidden)return;pending=true;try{const state=await Sync.getState(room);if(!state.ok||!Number.isInteger(state.slide)||state.slide<0||state.slide>=25)throw Error();frame.contentWindow.show(state.slide);statusText.textContent='発表に追随中　'+(state.slide+1)+' / 25'}catch{statusText.textContent='接続を確認中 · 自動で再接続します'}finally{pending=false}}
-frame.onload=refresh;document.addEventListener('visibilitychange',refresh);window.addEventListener('online',refresh);setInterval(refresh,5000);refresh()
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XR Kaigi 2026｜参加者用</title><style>body{margin:0;background:#102b33;color:white;font:14px sans-serif}iframe{width:100%;height:calc(100dvh - 28px);border:0;display:block}footer{text-align:center;line-height:28px}body{height:100dvh;display:flex;flex-direction:column;margin:0}iframe{flex:1;min-height:0;height:auto}footer{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap;padding:6px 10px}button{border:1px solid #7d9b9b;border-radius:6px;background:#173c44;color:white;padding:7px 12px;font:inherit;cursor:pointer}#feedback:empty{display:none}button:disabled{opacity:.45;cursor:default}#follow{background:#faf4e7;color:#102b33;font-weight:bold}button{min-height:44px}</style><iframe title="登壇スライド" src="deck.html"></iframe><footer><button id="previous" disabled>前へ</button><span id="sync" role="status">発表中のページを確認しています</span><button id="next" disabled>次へ</button><button id="follow" hidden>発表に戻る</button><button id="post">Xに投稿</button><button id="save">このスライドを画像保存</button><span id="feedback" role="status"></span></footer><script src="../config.js"></script><script src="sync-client.js?v=3"></script><script>
+const frame = document.querySelector('iframe');
+const statusText = document.querySelector('#sync');
+const previous = document.querySelector('#previous');
+const next = document.querySelector('#next');
+const follow = document.querySelector('#follow');
+let page = 0, count = 0, presenterPage = null;
+let following = true, pending = false, disconnected = false;
+
+function render() {
+  if (!count) return;
+  frame.contentWindow.show(page);
+  previous.disabled = page === 0;
+  next.disabled = page === count - 1;
+  follow.hidden = following;
+  const label = !following ? '自分で閲覧中' : disconnected ? '再接続中' :
+    presenterPage === null ? '発表位置を確認中' : '発表に追随中';
+  statusText.textContent = label + '　' + (page + 1) + ' / ' + count;
+}
+
+function browse(target) {
+  if (target < 0 || target >= count || target === page) return;
+  following = false;
+  page = target;
+  render();
+}
+previous.onclick = () => browse(page - 1);
+next.onclick = () => browse(page + 1);
+follow.onclick = () => {
+  following = true;
+  if (presenterPage !== null) page = presenterPage;
+  render();
+  refresh();
+};
+
+function navigate(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  if (event.key === ' ' && event.target.closest('button, a, input')) return;
+  const targets = { ArrowRight: page + 1, PageDown: page + 1, ' ': page + 1,
+    ArrowLeft: page - 1, PageUp: page - 1, Home: 0, End: count - 1 };
+  if (!Object.hasOwn(targets, event.key)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  browse(targets[event.key]);
+}
+
+async function refresh() {
+  if (!count || pending || document.hidden) return;
+  pending = true;
+  try {
+    const state = await Sync.getState('xr-kaigi-2026');
+    if (!state.ok || !Number.isInteger(state.slide) || state.slide < 0 || state.slide >= count)
+      throw Error('invalid slide');
+    presenterPage = state.slide;
+    disconnected = false;
+    if (following) page = presenterPage;
+  } catch {
+    disconnected = true;
+  } finally {
+    pending = false;
+    render();
+  }
+}
+
+function ready() {
+  if (typeof frame.contentWindow.show !== 'function') return;
+  count = frame.contentDocument.querySelectorAll('section').length;
+  frame.contentDocument.addEventListener('keydown', navigate, true);
+  render();
+  refresh();
+}
+frame.addEventListener('load', ready);
+document.addEventListener('keydown', navigate);
+document.addEventListener('visibilitychange', refresh);
+window.addEventListener('online', refresh);
+setInterval(refresh, 5000);
+ready();
 const saveButton = document.querySelector('#save');
 const postButton = document.querySelector('#post');
 const feedback = document.querySelector('#feedback');
